@@ -1,0 +1,112 @@
+version: 2
+
+# ---------- SOURCES ----------
+sources:
+  - name: raw
+    database: warehouse
+    schema: public
+    tables:
+      - name: customers
+      - name: products
+      - name: transactions
+
+# ---------- MODELS ----------
+models:
+
+  # ---- STAGING ----
+  - name: stg_customers
+    description: "Cleaned customers from raw.public.customers"
+    columns:
+      - name: customer_id
+        description: "Surrogate of raw customers.id"
+        tests:
+          - not_null
+          - unique
+      - name: email
+        description: "Customer email"
+      - name: gender
+        description: "Gender as provided in source"
+        tests:
+          - accepted_values:
+              values: ['Male', 'Female', 'Other']
+              severity: warn
+      - name: age
+        description: "Age in years"
+      - name: country
+        description: "ISO country code"
+
+  - name: stg_products
+    description: "Cleaned products from raw.public.products"
+    columns:
+      - name: product_id
+        description: "Surrogate of raw products.id"
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        description: "Product name"
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: price_gbp
+        description: "Unit price in GBP"
+        tests:
+          - not_null
+
+  - name: stg_transactions
+    description: "Cleaned transactions from raw.public.transactions"
+    columns:
+      - name: transaction_id
+        description: "Surrogate of raw transactions.id"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "FK to stg_customers.customer_id"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+              severity: warn   # keep as warning since orphans exist
+      - name: product_id
+        description: "FK to stg_products.product_id"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+              severity: warn   # keep as warning since orphans exist
+      - name: quantity
+        description: "Units purchased"
+        tests:
+          - not_null
+      - name: transaction_date
+        description: "Date of transaction"
+        tests:
+          - not_null
+
+  # ---- INTERMEDIATE ----
+  - name: int_customer_metrics
+    description: "Per-customer aggregates: spend, frequency, product diversity"
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: total_spent
+      - name: total_transactions
+      - name: product_diversity
+
+  # ---- MARTS ----
+  - name: fct_customer_segments
+    description: "Customer segments derived from spend, frequency, and diversity"
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: spend_segment
+      - name: frequency_segment
+      - name: diversity_segment
