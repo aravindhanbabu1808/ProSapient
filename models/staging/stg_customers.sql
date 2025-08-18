@@ -1,3 +1,5 @@
+{{ config(materialized='view') }}
+
 select
     id as customer_id,
     first_name,
@@ -5,6 +7,6 @@ select
     email,
     gender,
     age,
-    country,
-    signup_date
+    country as country_code,
+    signup_date::date as signup_date
 from {{ source('raw', 'customers') }}

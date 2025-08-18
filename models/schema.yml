@@ -28,7 +28,17 @@ models:
         description: "Gender as provided in source"
         tests:
           - accepted_values:
-              values: ['Male', 'Female', 'Other']
+              arguments:
+                values: [
+                  'Male',
+                  'Female',
+                  'Non-binary',
+                  'Genderqueer',
+                  'Genderfluid',
+                  'Agender',
+                  'Bigender',
+                  'Polygender'
+                ]
               severity: warn
       - name: age
         description: "Age in years"
@@ -67,17 +77,19 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_customers')
-              field: customer_id
-              severity: warn   # keep as warning since orphans exist
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+              severity: warn
       - name: product_id
         description: "FK to stg_products.product_id"
         tests:
           - not_null
           - relationships:
-              to: ref('stg_products')
-              field: product_id
-              severity: warn   # keep as warning since orphans exist
+              arguments:
+                to: ref('stg_products')
+                field: product_id
+              severity: warn
       - name: quantity
         description: "Units purchased"
         tests:
@@ -95,18 +107,50 @@ models:
         tests:
           - not_null
           - unique
-      - name: total_spent
-      - name: total_transactions
-      - name: product_diversity
+      - name: total_revenue
+      - name: order_count
+      - name: category_count
 
   # ---- MARTS ----
   - name: fct_customer_segments
-    description: "Customer segments derived from spend, frequency, and diversity"
+    description: "Customer segments derived from spend, frequency, diversity, and purchase gaps"
     columns:
       - name: customer_id
         tests:
           - not_null
           - unique
+      - name: total_revenue
+      - name: order_count
+      - name: category_count
+      - name: avg_days_between_purchases
       - name: spend_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Low','Medium','High']
       - name: frequency_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Rare','Occasional','Frequent']
       - name: diversity_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Focused','Diverse']
+      - name: spend_score
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1,2,3]
+      - name: frequency_score
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1,2,3]
+      - name: combined_score
+      - name: final_value_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Low Value','Medium Value','High Value']

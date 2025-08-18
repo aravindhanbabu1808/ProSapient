@@ -3,7 +3,8 @@ version: '1.0.0'
 config-version: 2
 
 profile: 'default'
-
+vars:
+  current_country: "GB"
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
